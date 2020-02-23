@@ -1,5 +1,7 @@
+import logging
 import json
 import hypernova
+from hypernova.plugins.dev_mode import DevModePlugin
 import mock
 import mocks
 import plugins
@@ -7,22 +9,22 @@ import unittest
 
 
 class TestRenderer(unittest.TestCase):
-    
+
     @mock.patch('requests.post', side_effect=mocks.make_server_timeout)
     def test_request_fail(self, mock_post):
         renderer = hypernova.Renderer('http://localhost')
         html = renderer.render({'component': {'foo': 'bar'}})
-        self.assertIsInstance(html, str)    
+        self.assertIsInstance(html, str)
 
 
 class TestPlugins(unittest.TestCase):
-    
+
     @mock.patch('requests.post', side_effect=mocks.make_response_ok)
     def test_no_plugins(self, mock_post):
         renderer = hypernova.Renderer('http://localhost')
         html = renderer.render({'component': {'foo': 'bar'}})
         self.assertEqual(html, '<p>{}</p>'.format(json.dumps({'foo': 'bar'})))
-        
+
     @mock.patch('requests.post', side_effect=mocks.make_response_ok)
     def test_plugin_get_view_data(self, mock_post):
         expected_data = {'foo': 'bar'}
@@ -71,17 +73,17 @@ class TestPlugins(unittest.TestCase):
     @mock.patch('requests.post', side_effect=mocks.make_response_ok)
     def test_plugin_should_send_request_any_false(self, mock_post):
         renderer = hypernova.Renderer('http://localhost', [
-            plugins.PluginShouldSendRequestTrue(), 
+            plugins.PluginShouldSendRequestTrue(),
             plugins.PluginShouldSendRequestFalse()
         ])
         html = renderer.render({'component': {}})
         self.assertFalse(mock_post.called)
-    
+
     @mock.patch('requests.post', side_effect=mocks.make_response_ok)
     @mock.patch.object(plugins.PluginWillSendRequest, 'will_send_request', autospec=True)
     def test_plugin_will_send_request(self, mock_plugin, mock_post):
         renderer = hypernova.Renderer('http://localhost', [
-            plugins.PluginShouldSendRequestTrue(), 
+            plugins.PluginShouldSendRequestTrue(),
             plugins.PluginWillSendRequest()
         ])
         renderer.render({'component': {}})
@@ -91,7 +93,7 @@ class TestPlugins(unittest.TestCase):
     @mock.patch.object(plugins.PluginWillSendRequest, 'will_send_request', autospec=True)
     def test_plugin_will_send_request_false(self, mock_plugin, mock_post):
         renderer = hypernova.Renderer('http://localhost', [
-            plugins.PluginShouldSendRequestFalse(), 
+            plugins.PluginShouldSendRequestFalse(),
             plugins.PluginWillSendRequest()
         ])
         renderer.render({'component': {}})
@@ -123,3 +125,12 @@ class TestPlugins(unittest.TestCase):
         ])
         renderer.render({'component': {}})
         self.assertEqual(1, mock_plugin.call_count)
+
+
+class TestDevModePlugin(unittest.TestCase):
+    def test_after_response_should_iterate_dict_on_error(self):
+        logger = logging.getLogger(__name__)
+        current = {'App': {'name': 'App'}}
+
+        resp = DevModePlugin(logger).after_response(current, {})
+        self.assertTrue('App' in resp)
