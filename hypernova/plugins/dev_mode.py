@@ -1,6 +1,3 @@
-import json
-
-
 def render_stack(error):
     return '\n  '.join(error.get('stack'))
 
@@ -19,12 +16,6 @@ def render_error(component_name, data):
     """.format(
         component_name, render_stack(data.get('error')), data.get('html')
     )
-
-
-def render_error_or_html(data):
-    if data.get('error'):
-        return render_error(data.get('error'))
-    return data.get('html')
 
 
 class DevModePlugin(object):
