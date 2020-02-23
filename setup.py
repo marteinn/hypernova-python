@@ -30,7 +30,7 @@ setup(
         'Programming Language :: Python',
     ],
     license='MIT License',
-    install_requires=['six', 'requests'],
+    install_requires=['requests'],
     packages=['hypernova', 'hypernova.plugins'],
     include_package_data=True
 )

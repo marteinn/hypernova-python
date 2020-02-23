@@ -1,4 +1,3 @@
-import six
 try:
     import httplib
 except ImportError:
@@ -23,21 +22,21 @@ class MockResponse(object):
 def make_response_ok(*args, **kwargs):
     data = kwargs.get('json', {})
     results = {}
-    for k, v in six.iteritems(data):
+    for k, v in data.items():
         results[k] = {
-            'error': None, 
+            'error': None,
             'html': '<p>{}</p>'.format(json.dumps(v.get('data')))
         }
-        
+
     return MockResponse({'error': None, 'results': results}, httplib.OK)
 
 
 def make_response_component_error(*args, **kwargs):
     data = kwargs.get('json', {})
     results = {}
-    for k, v in six.iteritems(data):
+    for k, v in data.items():
         results[k] = {
-            'error': 'Something happened', 
+            'error': 'Something happened',
             'html': '<p>{}</p>'.format(json.dumps(v.get('data')))
         }
     return MockResponse({'error': None, 'results': results}, httplib.OK)
@@ -45,7 +44,7 @@ def make_response_component_error(*args, **kwargs):
 
 def make_response_server_error(*args, **kwargs):
     return MockResponse(
-        {'error': 'Kaboom', 'results': {}}, 
+        {'error': 'Kaboom', 'results': {}},
         httplib.INTERNAL_SERVER_ERROR
     )
 

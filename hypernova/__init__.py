@@ -1,7 +1,6 @@
 import functools
 import json
 import requests
-import six
 
 
 def render_html(name, data):
@@ -14,7 +13,7 @@ def render_html(name, data):
 
 def render_fallback(error, jobs):
     results = {}
-    for name, job in six.iteritems(jobs):
+    for name, job in jobs.items():
         results[name] = {
             'error': None,
             'html': render_html(name, job.get('data')),
@@ -43,9 +42,9 @@ class Renderer(object):
 
     def create_jobs(self, jobs):
         created = {}
-        for job_name, job_data in six.iteritems(jobs):
+        for job_name, job_data in jobs.items():
             job_data = self.plugin_reduce(
-                'get_view_data', 
+                'get_view_data',
                 lambda plugin, new_data: plugin(job_name, new_data),
                 job_data
             )
@@ -57,8 +56,8 @@ class Renderer(object):
             'prepare_request', lambda plugin, obj: plugin(obj, jobs), jobs
         )
         should_send_request = self.plugin_reduce(
-            'should_send_request', 
-            lambda plugin, obj: obj and plugin(jobs_hash), 
+            'should_send_request',
+            lambda plugin, obj: obj and plugin(jobs_hash),
             True
         )
         return {
@@ -71,16 +70,16 @@ class Renderer(object):
         jobs_hash = request_data.get('jobs_hash')
 
         # TODO: Don't send if no jobs_hash
-        
+
         if request_data.get('should_send_request'):
             self.plugin_reduce(
                 'will_send_request', lambda plugin, _: plugin(jobs_hash)
             )
             try:
                 response = requests.post(
-                    self.url, 
-                    json=jobs_hash, 
-                    headers=self.headers, 
+                    self.url,
+                    json=jobs_hash,
+                    headers=self.headers,
                     timeout=self.timeout
                 )
                 if response.ok:
@@ -99,14 +98,14 @@ class Renderer(object):
 
         results = response_data.get('results')
         error = response_data.get('error')
-        
+
         if error:
             self.plugin_reduce(
                 'on_error', lambda plugin, _: plugin(error, results)
             )
 
         successful_jobs = []
-        for name, body in six.iteritems(results):
+        for name, body in results.items():
             body['job'] = jobs_hash.get(name)
             error = body.get('error')
             if error:
@@ -123,13 +122,13 @@ class Renderer(object):
 
         if self.plugins:
             results = self.plugin_reduce(
-                'after_response', 
-                lambda plugin, obj: plugin(obj, results), 
+                'after_response',
+                lambda plugin, obj: plugin(obj, results),
                 results
             )
-        
-        # TODO Maybe, 9. If an error is encountered then call 
-        #      onError(error, jobs) and assert that the fallback HTML 
+
+        # TODO Maybe, 9. If an error is encountered then call
+        #      onError(error, jobs) and assert that the fallback HTML
         #      is provided.
         #
         #      Basically, handle plugins raising exceptions.
